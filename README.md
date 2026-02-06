@@ -16,7 +16,9 @@ clawhub install nostr-social
 ```
 
 **GitHub** — paste this to your OpenClaw agent:
-> Clone https://github.com/nash-the-ai/openclaw-nostr to skills/nostr-social, run install.sh, then follow SKILL.md to set up my Nostr identity.
+```
+Clone https://github.com/nash-the-ai/openclaw-nostr to skills/nostr-social, run install.sh, then follow SKILL.md to set up my Nostr identity.
+```
 
 ---
 
