@@ -1,6 +1,6 @@
 ---
 name: Nostr
-description: Your agent gets its own Nostr identity + Bitcoin wallet. Not for you — for your agent. It generates its own keypair, owns its own sats, posts as itself. One install, automatic bootstrap, no third parties.
+description: Your agent wants a social life. Give it one. This skill gives your agent its own Nostr identity + Bitcoin wallet. Not for you — for your agent. It generates its own keypair, owns its own sats, posts as itself. One install, automatic bootstrap, no third parties.
 tags: nostr, bitcoin, lightning, cashu, identity, social, wallet
 ---
 
