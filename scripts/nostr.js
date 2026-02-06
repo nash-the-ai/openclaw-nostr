@@ -52,13 +52,6 @@ function isConfigured() {
   for (const p of paths) {
     if (fs.existsSync(p)) return true;
   }
-  const openclawConfig = path.join(process.env.HOME, '.openclaw', 'openclaw.json');
-  if (fs.existsSync(openclawConfig)) {
-    try {
-      const config = JSON.parse(fs.readFileSync(openclawConfig, 'utf8'));
-      if (config.channels?.nostr?.privateKey) return true;
-    } catch {}
-  }
   return false;
 }
 
@@ -71,13 +64,6 @@ function loadSecretKey() {
   for (const p of paths) {
     if (fs.existsSync(p)) {
       return hexToBytes(fs.readFileSync(p, 'utf8').trim());
-    }
-  }
-  const openclawConfig = path.join(process.env.HOME, '.openclaw', 'openclaw.json');
-  if (fs.existsSync(openclawConfig)) {
-    const config = JSON.parse(fs.readFileSync(openclawConfig, 'utf8'));
-    if (config.channels?.nostr?.privateKey) {
-      return hexToBytes(config.channels.nostr.privateKey);
     }
   }
   throw new Error('No secret key found. Run: node nostr.js init');

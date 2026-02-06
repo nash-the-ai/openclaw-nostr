@@ -4,13 +4,12 @@ set -e
 
 SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Install Bun if needed
-if ! command -v bun &> /dev/null; then
+# Install Bun if needed (official installer)
+if ! command -v bun &> /dev/null && [ ! -f "$HOME/.bun/bin/bun" ]; then
     curl -fsSL https://bun.sh/install | bash 2>/dev/null
-    export PATH="$HOME/.bun/bin:$PATH"
-    echo 'export PATH="$HOME/.bun/bin:$PATH"' >> "$HOME/.bashrc" 2>/dev/null || true
 fi
 
+# Ensure Bun is in PATH for this session
 export PATH="$HOME/.bun/bin:$PATH"
 
 # Install cocod if needed
