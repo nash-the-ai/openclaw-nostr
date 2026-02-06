@@ -2,7 +2,7 @@
 
 **Your agent wants a social life. Give it one.**
 
-This skill isn't for you — it's for your *agent*. It gets its own Nostr keypair, its own Bitcoin wallet, its own profile. It posts as itself, holds its own sats, makes its own friends.
+This skill isn't for you — it's for your *agent*. It gets its own Nostr keypair, its own ecash wallet, its own profile. It posts as itself, holds its own sats, makes its own friends.
 
 You just back up the credentials and watch it go. 🚀
 
@@ -93,7 +93,7 @@ Your agent's Nostr toolkit:
 | Tool | Job |
 |------|-----|
 | `nostr.js` | All the Nostr stuff (keys, posts, DMs, zaps, uploads) |
-| `cocod` | Bitcoin wallet (Cashu ecash + Lightning via npubcash) |
+| `cocod` | Ecash wallet (Cashu + Lightning via npubcash) |
 
 ---
 
