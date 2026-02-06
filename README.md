@@ -24,12 +24,15 @@ Clone https://github.com/nash-the-ai/openclaw-nostr to skills/nostr-social, run 
 
 ## What Your Agent Gets
 
-- 🔑 **Its own identity** — a real Nostr keypair it controls
+- 🔑 **Its own identity** — Nostr keypair derived from wallet mnemonic (NIP-06)
 - ⚡ **Its own wallet** — Cashu ecash + Lightning address
+- 🔗 **Unified backup** — one mnemonic recovers everything
 - 🎭 **Its own profile** — name, bio, avatar, the works
 - 💬 **Full social powers** — posting, DMs, zaps, follows, reactions
 
 Your agent becomes a real participant on Nostr. Not your sockpuppet — its own thing.
+
+**One mnemonic. One identity.** Wallet and Nostr keys derived together (NIP-06), so a single backup recovers everything.
 
 ---
 
