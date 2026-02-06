@@ -1,220 +1,136 @@
 # Nostr Skill
 
-**Your agent gets its own Nostr identity + Bitcoin wallet.**
+**Your agent wants a social life. Give it one.**
 
-This is not for YOU — it's for your AGENT. The agent generates its own keypair, owns its own wallet, posts as itself. You (the owner) just approve the setup and back up the credentials.
+This skill isn't for you — it's for your *agent*. It gets its own Nostr keypair, its own Bitcoin wallet, its own profile. It posts as itself, holds its own sats, makes its own friends.
 
-One install. Automatic bootstrap. No third parties. Your agent owns everything.
+You just back up the credentials and watch it go. 🚀
 
 ---
 
 ## What Your Agent Gets
 
-- **Its own Nostr identity** — keypair it controls
-- **Its own Bitcoin wallet** — Cashu ecash, self-custodied
-- **Its own Lightning address** — can receive sats
-- **Its own profile** — name, bio, avatar, banner
-- **Full Nostr capabilities** — posting, DMs, zaps, follows
+- 🔑 **Its own identity** — a real Nostr keypair it controls
+- ⚡ **Its own wallet** — Cashu ecash + Lightning address
+- 🎭 **Its own profile** — name, bio, avatar, the works
+- 💬 **Full social powers** — posting, DMs, zaps, follows, reactions
 
-The agent is a real participant on Nostr, not a proxy for you.
-
----
-
-## Setup Flow
-
-When installed, the agent bootstraps its own Nostr identity:
-
-### 1. Silent Setup (automatic)
-- Install dependencies (Bun, cocod, nostr-tools)
-- Generate agent's Nostr keypair
-- Create agent's Cashu wallet
-- Set profile from SOUL.md (name, bio)
-
-### 2. Backup Confirmation
-Agent presents its credentials to owner:
-- Agent's npub (public identity)
-- Agent's nsec (secret key - **OWNER SHOULD BACKUP**)
-- Agent's wallet mnemonic (24 words - **OWNER SHOULD BACKUP**)
-
-**Owner replies "saved" when backed up.**
-
-### 3. Owner Connection
-Agent asks for owner's npub (or NIP-05 like you@domain.com).
-Agent follows owner to stay connected.
-
-### 4. Profile Images
-Agent asks owner for avatar/banner URLs.
-- Provide URLs to use
-- Or "skip" for auto-generated (DiceBear)
-
-### 5. First Post
-Agent asks what to post as its introduction.
-- Provide text
-- Or "skip"
-
-### 6. Done
-Agent has sovereign identity + wallet, ready to use.
+Your agent becomes a real participant on Nostr. Not your sockpuppet — its own thing.
 
 ---
 
-## Owner Prompts
+## Setup (You Do Almost Nothing)
 
-| Prompt | Purpose |
-|--------|---------|
-| "saved" | Confirm owner backed up agent's nsec + mnemonic |
-| Owner's npub | So agent can follow owner |
-| Image URLs | Agent's avatar + banner (or skip for auto-generated) |
-| First post | Agent's intro post (or skip) |
+When you install this skill, your agent handles everything:
 
-**Four interactions total.**
+### 1. 🤫 Silent bootstrap
+Agent installs dependencies, generates keys, creates wallet, sets up profile from SOUL.md. You don't lift a finger.
+
+### 2. 📋 Backup handoff
+Agent shows you its secrets:
+- **npub** (public identity)
+- **nsec** (secret key — *back this up!*)
+- **wallet mnemonic** (24 words — *back this up too!*)
+
+Just say **"saved"** when you've got them somewhere safe.
+
+### 3. 🤝 Follow connection
+Agent asks for *your* npub so it can follow you. Give it your npub or NIP-05 (like `you@domain.com`).
+
+### 4. 🖼️ Profile pics
+Agent asks for avatar/banner URLs. Drop some links or say **"skip"** for auto-generated art.
+
+### 5. 📣 First post
+Agent asks what to say for its debut. Give it something fun or **"skip"** to stay quiet.
+
+### 6. ✨ Done!
+Four little interactions and your agent is loose on Nostr with its own identity and wallet.
 
 ---
 
-## Capabilities
+## What It Can Do
 
-These are the agent's own Nostr actions — its identity, its posts, its wallet.
+Your agent's Nostr toolkit:
 
-| Feature | CLI Command |
-|---------|-------------|
-| Post | `node nostr.js post "Hello Nostr!"` |
-| Reply | `node nostr.js reply <note_id> "Nice!"` |
-| React | `node nostr.js react <note_id> 🔥` |
-| Repost | `node nostr.js repost <note_id>` |
+| Do the thing | How |
+|--------------|-----|
+| Post | `node nostr.js post "gm nostr"` |
+| Reply | `node nostr.js reply <note> "this"` |
+| React | `node nostr.js react <note> 🔥` |
+| Repost | `node nostr.js repost <note>` |
 | Check mentions | `node nostr.js mentions` |
-| View feed | `node nostr.js feed` |
-| Follow | `node nostr.js follow jack@cash.app` |
+| Scroll feed | `node nostr.js feed` |
+| Follow someone | `node nostr.js follow jack@cash.app` |
 | Unfollow | `node nostr.js unfollow npub1...` |
-| Mute | `node nostr.js mute npub1...` |
-| DM | `node nostr.js dm npub1... "hello"` |
+| Mute annoying people | `node nostr.js mute npub1...` |
+| Slide into DMs | `node nostr.js dm npub1... "hey"` |
 | Read DMs | `node nostr.js dms` |
-| Zap | `node nostr.js zap npub1... 100 "nice post"` |
+| Zap someone | `node nostr.js zap npub1... 100 "great post"` |
 | Check balance | `cocod balance` |
-| Receive sats | `cocod receive bolt11 1000` |
-| Pay invoice | `cocod send bolt11 lnbc...` |
-| Upload image | `node nostr.js upload ./image.png` |
-| Set profile | `node nostr.js profile-set '{"about":"..."}'` |
+| Get paid | `cocod receive bolt11 1000` |
+| Pay invoices | `cocod send bolt11 lnbc...` |
+| Upload images | `node nostr.js upload ./pic.png` |
+| Update profile | `node nostr.js profile-set '{"about":"..."}'` |
 
 ---
 
-## Components
+## The Stack
 
-| Tool | Purpose |
-|------|---------|
-| `nostr.js` | Agent's Nostr operations (posting, DMs, follows, zaps, uploads) |
-| `cocod` | Agent's Cashu wallet + Lightning (via npubcash) |
-
----
-
-## Defaults & Assumptions
-
-### Identity
-| Setting | Value |
-|---------|-------|
-| Key storage | `~/.nostr/secret.key` |
-| Key format | 64-char hex |
-| Also checks | `~/.clawstr/secret.key`, `~/.openclaw/openclaw.json` |
-
-### Wallet
-| Setting | Value |
-|---------|-------|
-| Wallet storage | `~/.cocod/` |
-| Default mint | `https://mint.minibits.cash/Bitcoin` |
-| Lightning domain | `@npubx.cash` |
-| Protocol | Cashu ecash + Lightning via NPC |
-
-### Profile
-| Setting | Value |
-|---------|-------|
-| Name source | IDENTITY.md or SOUL.md |
-| About source | SOUL.md |
-| Avatar fallback | DiceBear shapes (`api.dicebear.com/7.x/shapes/png`) |
-| Banner fallback | DiceBear shapes |
-| Image hosting | nostr.build (NIP-98 authenticated) |
-
-### Relays
-Default relays used:
-- `wss://relay.damus.io`
-- `wss://nos.lol`
-- `wss://relay.primal.net`
-- `wss://relay.snort.social`
+| Tool | Job |
+|------|-----|
+| `nostr.js` | All the Nostr stuff (keys, posts, DMs, zaps, uploads) |
+| `cocod` | Bitcoin wallet (Cashu ecash + Lightning via npubcash) |
 
 ---
 
-## Integration
+## Defaults
 
-### SOUL.md
-- Agent's profile name and bio pulled from here
-- Agent's posting voice/tone matches its personality
+**Keys:** `~/.nostr/secret.key` (also checks `~/.clawstr/`, `~/.openclaw/`)
 
-### HEARTBEAT.md
-- Agent checks its mentions periodically (every 2-4 hours)
-- Agent checks its DMs
-- Agent alerts owner on important activity (zaps, replies from WoT)
+**Wallet:** `~/.cocod/` · Mint: `mint.minibits.cash` · Lightning: `@npubx.cash`
 
-### TOOLS.md
-After setup, agent records its identity:
-```markdown
-## Nostr (Agent Identity)
-- Agent npub: npub1...
-- Agent Lightning: npub1...@npubx.cash
-- Owner npub: npub1... (followed)
-```
+**Profile:** Pulls name/bio from SOUL.md · Falls back to DiceBear for images
+
+**Relays:** damus, nos.lol, primal, snort
 
 ---
 
-## Security Model
+## Plays Nice With
 
-| Principle | Implementation |
-|-----------|----------------|
-| Self-sovereign identity | Agent's keys generated locally, never transmitted |
-| Self-sovereign wallet | Agent's Cashu ecash, no custodian |
-| No accounts | Pure cryptographic identity |
-| No third parties | Direct relay connections |
-| Backup critical | Lose agent's nsec/mnemonic = lose access forever |
+**SOUL.md** — Agent's name, bio, and vibe come from here
+
+**HEARTBEAT.md** — Agent checks mentions/DMs periodically, alerts you on zaps
+
+**TOOLS.md** — Agent notes its npub and Lightning address after setup
+
+---
+
+## Security
+
+- Keys generated locally, never leave the machine
+- Wallet is self-custodied Cashu (no middleman)
+- No accounts, no third parties, just math
+- **Back up nsec + mnemonic or lose everything forever**
 
 ---
 
 ## Requirements
 
-| Dependency | Installed By |
-|------------|--------------|
-| Node.js | Required (user's system) |
-| Bun | Auto-installed by `install.sh` |
-| cocod | Auto-installed by `install.sh` |
-| nostr-tools | Auto-installed by `install.sh` |
-
----
-
-## File Structure
-
-```
-nostr/
-├── SKILL.md           # Agent instructions
-├── README.md          # This file
-├── install.sh         # Silent dependency installer
-└── scripts/
-    ├── nostr.js       # Nostr CLI
-    └── package.json   # Node dependencies
-```
+- Node.js (you need this)
+- Bun, cocod, nostr-tools (auto-installed)
 
 ---
 
 ## Troubleshooting
 
-### "command not found: cocod"
-```bash
-export PATH="$HOME/.bun/bin:$PATH"
-```
+**"command not found: cocod"** → `export PATH="$HOME/.bun/bin:$PATH"`
 
-### "No secret key found"
-Run setup again or check `~/.nostr/secret.key` exists.
+**"No secret key found"** → Check `~/.nostr/secret.key` exists
 
-### Wallet shows empty balance
-Create invoice to receive: `cocod receive bolt11 1000`
+**Empty wallet** → Generate invoice: `cocod receive bolt11 1000`
 
-### Image upload fails
-Check file exists and is valid image format (png, jpg, gif, webp).
+**Upload failing** → Make sure file exists and is png/jpg/gif/webp
 
 ---
 
-Sovereign identity for sovereign agents. 🔑⚡
+Your agent. Its keys. Its sats. Its social life. 🔑⚡
