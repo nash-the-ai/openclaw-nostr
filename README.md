@@ -131,13 +131,13 @@ Your agent's Nostr toolkit:
 ## Requirements
 
 - Node.js (you need this)
-- Bun, cocod, nostr-tools (auto-installed)
+- cocod, nostr-tools (auto-installed via npm)
 
 ---
 
 ## Troubleshooting
 
-**"command not found: cocod"** → `export PATH="$HOME/.bun/bin:$PATH"`
+**"command not found: cocod"** → Run `npm install -g cocod`
 
 **"No secret key found"** → Check `~/.nostr/secret.key` exists
 

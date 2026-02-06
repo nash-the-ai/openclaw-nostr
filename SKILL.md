@@ -23,7 +23,6 @@ node {SKILL_DIR}/scripts/nostr.js init
 # CAPTURE nsec from output
 
 # Create wallet (if not exists)
-export PATH="$HOME/.bun/bin:$PATH"
 cocod init
 # CAPTURE 24-word mnemonic from output
 
@@ -155,8 +154,6 @@ Try: "check my mentions" or "post <message>"
 ---
 
 ## Commands Reference
-
-Always prefix cocod with: `export PATH="$HOME/.bun/bin:$PATH"`
 
 ### Posting
 ```bash
