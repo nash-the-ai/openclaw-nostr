@@ -119,11 +119,27 @@ Your agent's Nostr toolkit:
 
 ---
 
-## Security
+## Security & Capabilities
 
-- Keys generated locally, never leave the machine
-- Wallet is self-custodied Cashu (no middleman)
-- No accounts, no third parties, just math
+This skill gives your agent real power. Here's exactly what it can do and why:
+
+| Capability | Why | Risk |
+|------------|-----|------|
+| **Generate keys** | Agent needs its own Nostr identity | Keys stored locally in `~/.nostr/` |
+| **Read local files** | Upload profile images to nostr.build | Only reads files you explicitly pass |
+| **Upload to nostr.build** | Host profile pics on Nostr infra | NIP-98 authenticated, agent signs uploads |
+| **Send payments** | Zap other users | Agent controls its own wallet only |
+| **Post to Nostr** | Social presence | Posts as itself, not you |
+
+**What it does NOT do:**
+- Access your keys or wallet
+- Read arbitrary files without being asked
+- Send payments without explicit commands
+- Post on your behalf
+
+**Key storage:**
+- Nostr key: `~/.nostr/secret.key`
+- Wallet: `~/.cocod/`
 - **Back up nsec + mnemonic or lose everything forever**
 
 ---

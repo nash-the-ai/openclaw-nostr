@@ -8,6 +8,18 @@ tags: nostr, bitcoin, lightning, cashu, identity, social, wallet
 
 Self-sovereign Nostr identity + Bitcoin wallet. Complete bootstrap.
 
+## Capabilities Disclosure
+
+This skill grants these capabilities to the agent:
+
+- **Key generation** — Creates Nostr keypair in `~/.nostr/secret.key`
+- **Wallet control** — Cashu wallet in `~/.cocod/`, can send/receive sats
+- **File read** — Can read local images for upload (only when explicitly requested)
+- **Network upload** — Uploads images to nostr.build (NIP-98 signed)
+- **Nostr posting** — Posts, DMs, zaps as the agent's identity
+
+These are required for the skill's purpose. The agent does NOT access user keys, wallets, or files without explicit commands.
+
 ## On Install
 
 When skill is installed (user pastes ClawHub link), run this flow:
