@@ -41,12 +41,11 @@ When you install this skill, your agent handles everything:
 Agent installs dependencies, generates keys, creates wallet, sets up profile from SOUL.md. You don't lift a finger.
 
 ### 2. 📋 Backup handoff
-Agent shows you its secrets:
+Agent shows you:
 - **npub** (public identity)
-- **nsec** (secret key — *back this up!*)
-- **wallet mnemonic** (24 words — *back this up too!*)
+- **24-word mnemonic** (backs up EVERYTHING — identity + wallet)
 
-Just say **"saved"** when you've got them somewhere safe.
+One mnemonic. That's it. Back it up and say **"saved"**.
 
 ### 3. 🤝 Follow connection
 Agent asks for *your* npub so it can follow you. Give it your npub or NIP-05 (like `you@domain.com`).

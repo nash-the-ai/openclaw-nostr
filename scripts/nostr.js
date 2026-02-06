@@ -15,6 +15,8 @@ import WebSocket from 'ws';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { HDKey } from '@scure/bip32';
+import { mnemonicToSeedSync } from '@scure/bip39';
 
 useWebSocketImplementation(WebSocket);
 
@@ -23,7 +25,11 @@ const RELAYS = [
   'wss://relay.damus.io',
   'wss://nos.lol', 
   'wss://relay.primal.net',
-  'wss://relay.snort.social'
+  'wss://relay.snort.social',
+  'wss://relay.nostr.band',
+  'wss://purplepag.es',
+  'wss://nostr.wine',
+  'wss://relay.nostr.net'
 ];
 
 // Hex utilities
@@ -76,6 +82,27 @@ function generateSecretKey() {
   return bytes;
 }
 
+// Derive Nostr key from mnemonic using NIP-06
+function deriveKeyFromMnemonic(mnemonic) {
+  const seed = mnemonicToSeedSync(mnemonic);
+  const root = HDKey.fromMasterSeed(seed);
+  const key = root.derive("m/44'/1237'/0'/0/0");
+  // key.privateKey is 32 bytes
+  return new Uint8Array(key.privateKey);
+}
+
+// Get cocod mnemonic if available
+function getCocodMnemonic() {
+  const configPath = path.join(process.env.HOME, '.cocod', 'config.json');
+  if (fs.existsSync(configPath)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      return config.mnemonic;
+    } catch {}
+  }
+  return null;
+}
+
 // Save secret key
 function saveSecretKey(sk) {
   if (!fs.existsSync(NOSTR_DIR)) {
@@ -97,6 +124,8 @@ async function init(existingKey) {
   }
   
   let sk;
+  let fromCocod = false;
+  
   if (existingKey) {
     // Import existing key
     if (existingKey.startsWith('nsec1')) {
@@ -109,9 +138,17 @@ async function init(existingKey) {
     }
     console.log('Importing existing key...');
   } else {
-    // Generate new key
-    sk = generateSecretKey();
-    console.log('Generating new Nostr identity...');
+    // Check if cocod wallet exists - derive from its mnemonic for unified identity
+    const mnemonic = getCocodMnemonic();
+    if (mnemonic) {
+      console.log('Found cocod wallet - deriving Nostr identity from wallet mnemonic (NIP-06)...');
+      sk = deriveKeyFromMnemonic(mnemonic);
+      fromCocod = true;
+    } else {
+      // Generate new key
+      sk = generateSecretKey();
+      console.log('Generating new Nostr identity...');
+    }
   }
   
   saveSecretKey(sk);
@@ -122,11 +159,18 @@ async function init(existingKey) {
   console.log(`  npub: ${nip19.npubEncode(pk)}`);
   console.log(`  nsec: ${nip19.nsecEncode(sk)}`);
   console.log(`\n  Key saved to: ${SECRET_KEY_FILE}`);
-  console.log('\n⚠️  BACKUP YOUR NSEC! If lost, your identity cannot be recovered.');
-  console.log('\nNext steps:');
-  console.log('  node nostr.js profile "Your Name" "Your bio"');
-  console.log('  node nostr.js post "Hello Nostr!"');
-  console.log('  cocod init    # Setup wallet for payments');
+  
+  if (fromCocod) {
+    console.log('\n🔗 Identity derived from cocod wallet mnemonic.');
+    console.log('   Your wallet mnemonic backs up BOTH wallet AND Nostr identity.');
+    console.log('   NIP-05 via npubx.cash will match this identity.');
+  } else {
+    console.log('\n⚠️  BACKUP YOUR NSEC! If lost, your identity cannot be recovered.');
+    console.log('\nNext steps:');
+    console.log('  node nostr.js profile "Your Name" "Your bio"');
+    console.log('  node nostr.js post "Hello Nostr!"');
+    console.log('  cocod init    # Setup wallet for payments');
+  }
 }
 
 // STATUS: Check configuration status
