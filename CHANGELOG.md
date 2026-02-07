@@ -2,6 +2,13 @@
 
 All notable changes to the Nostr skill.
 
+## [Unreleased]
+
+### Fixed
+- Removed flawed duplicate reply check that blocked legitimate threaded conversations
+- Eliminated 2-5s latency from reply command by removing unnecessary sync query  
+- Removed `--force` parameter (no longer needed)
+
 ## [1.2.0] - 2026-02-07
 
 ### Added
