@@ -280,10 +280,26 @@ async function post(content) {
 }
 
 // REPLY: kind 1 reply
-async function reply(eventRef, content) {
+async function reply(eventRef, content, force = false) {
   const eventId = resolveEventId(eventRef);
   const original = await pool.get(RELAYS, { ids: [eventId] });
   if (!original) throw new Error('Event not found');
+  
+  // Check for existing reply from me to this note
+  if (!force) {
+    const existingReplies = await pool.querySync(RELAYS, { 
+      kinds: [1], 
+      authors: [pk], 
+      '#e': [eventId],
+      limit: 1
+    });
+    if (existingReplies.length > 0) {
+      console.log(`⚠️  Already replied to this note: ${nip19.noteEncode(existingReplies[0].id)}`);
+      console.log(`   "${existingReplies[0].content.slice(0, 60)}..."`);
+      console.log(`   Use --force to reply anyway.`);
+      return;
+    }
+  }
   
   const mentions = parseMentions(content);
   const tags = [
@@ -1002,7 +1018,12 @@ try {
   switch (cmd) {
     // Content commands support stdin: echo "message" | node nostr.js post -
     case 'post': await post(await getContent(args)); break;
-    case 'reply': await reply(args[0], await getContent(args, 1)); break;
+    case 'reply': {
+      const force = args.includes('--force');
+      const filteredArgs = args.filter(a => a !== '--force');
+      await reply(filteredArgs[0], await getContent(filteredArgs, 1), force);
+      break;
+    }
     case 'follow': await follow(args[0]); break;
     case 'unfollow': await unfollow(args[0]); break;
     case 'dm': await dm(args[0], await getContent(args, 1)); break;

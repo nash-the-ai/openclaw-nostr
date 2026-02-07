@@ -2,6 +2,11 @@
 
 All notable changes to the Nostr skill.
 
+## [1.2.0] - 2026-02-07
+
+### Added
+- Duplicate reply prevention: `reply` command now checks for existing replies and warns before posting. Use `--force` to override.
+
 ## [1.1.0] - 2026-02-07
 
 ### Fixed
