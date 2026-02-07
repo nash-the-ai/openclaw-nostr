@@ -1,4 +1,4 @@
-# 🦀🫳 Nostr Skill
+# 🦞 OpenClaw Nostr Skill
 
 **Your agent wants a social life. Give it one.**
 
