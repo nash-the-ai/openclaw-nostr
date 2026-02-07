@@ -451,6 +451,53 @@ async function mentions(limit = 20) {
   }
 }
 
+// SHOW: display full content of a note
+async function show(noteId) {
+  if (!noteId) {
+    console.log('Usage: show <note1...>');
+    return;
+  }
+  
+  let eventId;
+  try {
+    if (noteId.startsWith('note1')) {
+      const decoded = nip19.decode(noteId);
+      eventId = decoded.data;
+    } else if (noteId.startsWith('nevent1')) {
+      const decoded = nip19.decode(noteId);
+      eventId = decoded.data.id;
+    } else {
+      eventId = noteId; // assume hex
+    }
+  } catch (e) {
+    console.log('Invalid note ID');
+    return;
+  }
+  
+  const event = await pool.get(RELAYS, { ids: [eventId] });
+  
+  if (!event) {
+    console.log('Note not found');
+    return;
+  }
+  
+  const date = new Date(event.created_at * 1000).toLocaleString();
+  const npub = nip19.npubEncode(event.pubkey);
+  
+  console.log(`📝 Note by ${npub}`);
+  console.log(`   ${date}\n`);
+  console.log(event.content);
+  console.log(`\n---`);
+  console.log(`ID: ${nip19.noteEncode(event.id)}`);
+  
+  // Show reply context if it's a reply
+  const replyTag = event.tags.find(t => t[0] === 'e' && t[3] === 'reply');
+  const rootTag = event.tags.find(t => t[0] === 'e' && t[3] === 'root');
+  if (replyTag || rootTag) {
+    console.log(`Reply to: ${nip19.noteEncode(replyTag?.at(1) || rootTag?.at(1))}`);
+  }
+}
+
 // FEED: get feed from follows
 async function feed(limit = 20) {
   const contactList = await pool.get(RELAYS, { kinds: [3], authors: [pk] });
@@ -953,6 +1000,7 @@ try {
     case 'dms': await readDms(parseInt(args[0]) || 10); break;
     case 'zap': await zap(args[0], parseInt(args[1]), args.slice(2).join(' ') || ''); break;
     case 'mentions': await mentions(parseInt(args[0]) || 20); break;
+    case 'show': await show(args[0]); break;
     case 'feed': await feed(parseInt(args[0]) || 20); break;
     case 'profile': await profile(args[0], args.slice(1).join(' ')); break;
     case 'profile-set': await profileSet(await getContent(args)); break;
@@ -1002,6 +1050,7 @@ SOCIAL
   repost <note1...>           Repost/boost a note
   delete <note1...>           Delete your note
   mentions [limit]            Check mentions
+  show <note1...>             Show full note content
   feed [limit]                View feed from follows
 
 CONNECTIONS
