@@ -881,8 +881,27 @@ async function awardBadge(badgeId, recipientPubkey) {
 }
 
 // UPLOAD: upload image to nostr.build with NIP-98 auth
+// SECURITY: Restricted to image files in safe directories only
 async function upload(filePath) {
   const absolutePath = path.resolve(filePath);
+  
+  // Security: Only allow image extensions
+  const ext = path.extname(absolutePath).toLowerCase();
+  const allowedExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+  if (!allowedExts.includes(ext)) {
+    throw new Error(`Security: Only image files allowed (${allowedExts.join(', ')}). Got: ${ext}`);
+  }
+  
+  // Security: Only allow files from safe directories
+  const safeRoots = [
+    path.join(process.env.HOME, '.openclaw', 'workspace'),
+    '/tmp'
+  ];
+  const inSafeDir = safeRoots.some(root => absolutePath.startsWith(root + '/'));
+  if (!inSafeDir) {
+    throw new Error(`Security: Upload only allowed from workspace or /tmp. Path: ${absolutePath}`);
+  }
+  
   if (!fs.existsSync(absolutePath)) {
     throw new Error(`File not found: ${absolutePath}`);
   }
