@@ -45,6 +45,38 @@ function bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Read content from stdin (for safe message passing without shell injection)
+async function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('readable', () => {
+      let chunk;
+      while ((chunk = process.stdin.read()) !== null) {
+        data += chunk;
+      }
+    });
+    process.stdin.on('end', () => {
+      resolve(data.trim());
+    });
+    // If stdin is a TTY (interactive), return empty immediately
+    if (process.stdin.isTTY) {
+      resolve('');
+    }
+  });
+}
+
+// Get content: from stdin if '-', otherwise from args
+async function getContent(args, joinFrom = 0) {
+  const content = args.slice(joinFrom).join(' ');
+  if (content === '-' || content === '') {
+    const stdinContent = await readStdin();
+    if (stdinContent) return stdinContent;
+    if (content === '-') throw new Error('No content provided via stdin');
+  }
+  return content;
+}
+
 // Config paths
 const NOSTR_DIR = path.join(process.env.HOME, '.nostr');
 const SECRET_KEY_FILE = path.join(NOSTR_DIR, 'secret.key');
@@ -912,17 +944,18 @@ if (!isConfigured() && cmd && cmd !== 'help') {
 
 try {
   switch (cmd) {
-    case 'post': await post(args.join(' ')); break;
-    case 'reply': await reply(args[0], args.slice(1).join(' ')); break;
+    // Content commands support stdin: echo "message" | node nostr.js post -
+    case 'post': await post(await getContent(args)); break;
+    case 'reply': await reply(args[0], await getContent(args, 1)); break;
     case 'follow': await follow(args[0]); break;
     case 'unfollow': await unfollow(args[0]); break;
-    case 'dm': await dm(args[0], args.slice(1).join(' ')); break;
+    case 'dm': await dm(args[0], await getContent(args, 1)); break;
     case 'dms': await readDms(parseInt(args[0]) || 10); break;
-    case 'zap': await zap(args[0], parseInt(args[1]), args.slice(2).join(' ')); break;
+    case 'zap': await zap(args[0], parseInt(args[1]), args.slice(2).join(' ') || ''); break;
     case 'mentions': await mentions(parseInt(args[0]) || 20); break;
     case 'feed': await feed(parseInt(args[0]) || 20); break;
     case 'profile': await profile(args[0], args.slice(1).join(' ')); break;
-    case 'profile-set': await profileSet(args.join(' ')); break;
+    case 'profile-set': await profileSet(await getContent(args)); break;
     case 'lookup': await lookup(args[0]); break;
     case 'react': await react(args[0], args[1] || '🤙'); break;
     case 'repost': await repost(args[0]); break;
@@ -940,7 +973,7 @@ try {
       break;
     case 'channel':
       if (args[0] === 'create') await createChannel(args[1], args[2], args[3]);
-      else if (args[0] === 'post') await channelPost(args[1], args.slice(2).join(' '));
+      else if (args[0] === 'post') await channelPost(args[1], await getContent(args, 2));
       else if (args[0] === 'read') await channelMessages(args[1], parseInt(args[2]) || 20);
       else console.log('Usage: channel <create|post|read> [args]');
       break;

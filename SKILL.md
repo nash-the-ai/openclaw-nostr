@@ -29,14 +29,14 @@ When skill is installed (user pastes ClawHub link), run this flow:
 bash {SKILL_DIR}/install.sh
 
 # Create wallet (mnemonic saved to config file)
-cocod init > /dev/null 2>&1
+npx cocod init > /dev/null 2>&1
 
 # Derive Nostr identity from wallet mnemonic (NIP-06)
 node {SKILL_DIR}/scripts/nostr.js init
 
 # Get identity info
 NPUB=$(node {SKILL_DIR}/scripts/nostr.js whoami | grep npub | awk '{print $2}')
-LN_ADDR=$(cocod npc address)
+LN_ADDR=$(npx cocod npc address)
 
 # Set basic profile
 node {SKILL_DIR}/scripts/nostr.js profile-set '{"name":"<NAME>","about":"<ABOUT>","lud16":"'$LN_ADDR'"}'
@@ -130,9 +130,9 @@ Suggestion: "Hello Nostr! ⚡"
 
 ---
 
-If user provides text:
+If user provides text (use stdin to avoid shell injection):
 ```bash
-node {SKILL_DIR}/scripts/nostr.js post "<user's message>"
+echo "<user's message>" | node {SKILL_DIR}/scripts/nostr.js post -
 ```
 
 ### Step 7: Done
@@ -152,8 +152,9 @@ Try: "check my mentions" or "post <message>"
 
 ### Posting
 ```bash
-node {SKILL_DIR}/scripts/nostr.js post "message"
-node {SKILL_DIR}/scripts/nostr.js reply <note1...> "text"
+# Use stdin for content (prevents shell injection)
+echo "message" | node {SKILL_DIR}/scripts/nostr.js post -
+echo "reply text" | node {SKILL_DIR}/scripts/nostr.js reply <note1...> -
 node {SKILL_DIR}/scripts/nostr.js react <note1...> 🔥
 node {SKILL_DIR}/scripts/nostr.js repost <note1...>
 node {SKILL_DIR}/scripts/nostr.js delete <note1...>
@@ -176,7 +177,7 @@ node {SKILL_DIR}/scripts/nostr.js lookup <nip05>
 
 ### DMs
 ```bash
-node {SKILL_DIR}/scripts/nostr.js dm <npub> "message"
+echo "message" | node {SKILL_DIR}/scripts/nostr.js dm <npub> -
 node {SKILL_DIR}/scripts/nostr.js dms 10
 ```
 
@@ -185,15 +186,15 @@ node {SKILL_DIR}/scripts/nostr.js dms 10
 # Get invoice
 node {SKILL_DIR}/scripts/nostr.js zap <npub> 100 "comment"
 # Pay it
-cocod send bolt11 <invoice>
+npx cocod send bolt11 <invoice>
 ```
 
 ### Wallet
 ```bash
-cocod balance
-cocod receive bolt11 1000    # Create invoice
-cocod send bolt11 <invoice>  # Pay invoice
-cocod npc address            # Lightning address
+npx cocod balance
+npx cocod receive bolt11 1000    # Create invoice
+npx cocod send bolt11 <invoice>  # Pay invoice
+npx cocod npc address            # Lightning address
 ```
 
 ### Profile
@@ -222,17 +223,17 @@ node {SKILL_DIR}/scripts/nostr.js relays remove <url>
 
 | User says | Action |
 |-----------|--------|
-| "post X" | `nostr.js post "X"` |
-| "reply to X with Y" | `nostr.js reply <note> "Y"` |
+| "post X" | `echo "X" \| nostr.js post -` |
+| "reply to X with Y" | `echo "Y" \| nostr.js reply <note> -` |
 | "check mentions" | `nostr.js mentions` |
 | "my feed" | `nostr.js feed` |
 | "follow X" | Lookup if NIP-05 → `nostr.js follow` |
-| "DM X message" | `nostr.js dm <npub> "message"` |
-| "zap X 100 sats" | `nostr.js zap` → `cocod send bolt11` |
-| "balance" | `cocod balance` |
-| "invoice for 1000" | `cocod receive bolt11 1000` |
+| "DM X message" | `echo "message" \| nostr.js dm <npub> -` |
+| "zap X 100 sats" | `nostr.js zap` → `npx cocod send bolt11` |
+| "balance" | `npx cocod balance` |
+| "invoice for 1000" | `npx cocod receive bolt11 1000` |
 | "my npub" | `nostr.js whoami` |
-| "my lightning address" | `cocod npc address` |
+| "my lightning address" | `npx cocod npc address` |
 
 ## Defaults
 
@@ -275,4 +276,4 @@ After setup, store for quick reference:
 - **About**: SOUL.md description
 - **Picture**: User-provided URL, or DiceBear fallback
 - **Banner**: User-provided URL, or DiceBear fallback
-- **lud16**: From `cocod npc address`
+- **lud16**: From `npx cocod npc address`

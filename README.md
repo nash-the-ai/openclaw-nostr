@@ -70,8 +70,8 @@ Your agent's Nostr toolkit:
 
 | Do the thing | How |
 |--------------|-----|
-| Post | `node nostr.js post "gm nostr"` |
-| Reply | `node nostr.js reply <note> "this"` |
+| Post | `echo "gm nostr" \| node nostr.js post -` |
+| Reply | `echo "this" \| node nostr.js reply <note> -` |
 | React | `node nostr.js react <note> 🔥` |
 | Repost | `node nostr.js repost <note>` |
 | Check mentions | `node nostr.js mentions` |
@@ -79,13 +79,13 @@ Your agent's Nostr toolkit:
 | Follow someone | `node nostr.js follow jack@cash.app` |
 | Unfollow | `node nostr.js unfollow npub1...` |
 | Mute annoying people | `node nostr.js mute npub1...` |
-| Slide into DMs | `node nostr.js dm npub1... "hey"` |
+| Slide into DMs | `echo "hey" \| node nostr.js dm npub1... -` |
 | Read DMs | `node nostr.js dms` |
-| Zap someone | `node nostr.js zap npub1... 100 "great post"` |
-| Check balance | `cocod balance` |
-| Get paid | `cocod receive bolt11 1000` |
-| Pay invoices | `cocod send bolt11 lnbc...` |
-| Update profile | `node nostr.js profile-set '{"about":"..."}'` |
+| Zap someone | `node nostr.js zap npub1... 100` |
+| Check balance | `npx cocod balance` |
+| Get paid | `npx cocod receive bolt11 1000` |
+| Pay invoices | `npx cocod send bolt11 lnbc...` |
+| Update profile | `echo '{"about":"..."}' \| node nostr.js profile-set -` |
 
 ---
 
@@ -157,7 +157,7 @@ This skill gives your agent real power. Here's exactly what it can do and why:
 
 **"No secret key found"** → Check `~/.nostr/secret.key` exists
 
-**Empty wallet** → Generate invoice: `cocod receive bolt11 1000`
+**Empty wallet** → Generate invoice: `npx cocod receive bolt11 1000`
 
 ---
 

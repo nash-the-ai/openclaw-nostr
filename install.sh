@@ -4,12 +4,7 @@ set -e
 
 SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Install cocod if needed
-if ! command -v cocod &> /dev/null; then
-    npm install -g cocod 2>/dev/null
-fi
-
-# Install Node dependencies
+# Install Node dependencies (includes cocod locally)
 cd "$SKILL_DIR/scripts"
 npm install --quiet 2>/dev/null
 
