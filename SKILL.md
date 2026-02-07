@@ -13,77 +13,66 @@ Self-sovereign Nostr identity + ecash wallet. Complete bootstrap.
 This skill grants these capabilities to the agent:
 
 - **Key generation** — Creates Nostr keypair in `~/.nostr/secret.key`
-- **Wallet control** — Cashu wallet in `~/.cocod/`, can send/receive sats
-- **File read** — Can read images from workspace/tmp only (security restricted)
-- **Network upload** — Uploads images to nostr.build (NIP-98 signed, images only)
+- **Wallet creation** — Cashu wallet in `~/.cocod/` (mnemonic in config.json — user backs up)
 - **Nostr posting** — Posts, DMs, zaps as the agent's identity
 
-These are required for the skill's purpose. The agent does NOT access user keys, wallets, or files without explicit commands.
+Agent runs wallet/identity setup silently. User is directed to back up `~/.cocod/config.json` (contains mnemonic). Agent does not read or display the mnemonic. Profile images use URLs only (no local file access).
 
 ## On Install
 
 When skill is installed (user pastes ClawHub link), run this flow:
 
-### Step 1: Install Dependencies
+### Step 1: Silent Setup
 
 ```bash
+# Install dependencies
 bash {SKILL_DIR}/install.sh
-```
 
-### Step 2: User Creates Wallet (SECURITY)
+# Create wallet (mnemonic saved to config file)
+cocod init > /dev/null 2>&1
 
-**IMPORTANT:** The mnemonic is sensitive. The user must run this themselves.
-
-Reply to user:
-
----
-
-⚡ **Almost ready!**
-
-First, you need to create the wallet yourself (so I never see the recovery phrase):
-
-1. Open a terminal
-2. Run: `cocod init`
-3. **SAVE THE 24 WORDS** — this backs up everything
-4. Reply "done" when complete
-
-(This keeps your recovery phrase private — I won't see it)
-
----
-
-### Step 3: Wait for "done"
-
-Do not proceed until user confirms wallet creation.
-
-### Step 4: Create Nostr Identity
-
-```bash
-# Derives from wallet mnemonic via NIP-06
-# One mnemonic backs up both wallet AND identity
+# Derive Nostr identity from wallet mnemonic (NIP-06)
 node {SKILL_DIR}/scripts/nostr.js init
 
 # Get identity info
 NPUB=$(node {SKILL_DIR}/scripts/nostr.js whoami | grep npub | awk '{print $2}')
 LN_ADDR=$(cocod npc address)
 
-# Set basic profile (name/about from SOUL.md, Lightning address)
+# Set basic profile
 node {SKILL_DIR}/scripts/nostr.js profile-set '{"name":"<NAME>","about":"<ABOUT>","lud16":"'$LN_ADDR'"}'
 ```
 
-### Step 5: Report Results
+### Step 2: Report Results + Backup Warning
 
 Reply to user:
 
 ---
 
-✅ **Nostr identity created!**
+⚡ **Nostr identity ready!**
 
 **npub:** `npub1...`
 **Lightning address:** `npub1...@npubx.cash`
 
 ---
 
-### Step 6: Ask for Owner's npub
+⚠️ **IMPORTANT: Back up your recovery phrase**
+
+Your 24-word mnemonic is stored in:
+```
+~/.cocod/config.json
+```
+
+This phrase recovers both your Nostr identity AND ecash wallet. Back it up securely and protect this file.
+
+Reply "done" when you've backed it up.
+
+---
+
+### Step 3: Wait for "done"
+
+Do not proceed until user confirms backup.
+
+### Step 4: Ask for Owner's npub
 
 ---
 
@@ -104,7 +93,7 @@ node {SKILL_DIR}/scripts/nostr.js lookup <nip05>
 node {SKILL_DIR}/scripts/nostr.js follow <owner_npub>
 ```
 
-### Step 7: Ask for Profile Images
+### Step 5: Ask for Profile Images
 
 ---
 
@@ -129,7 +118,7 @@ BANNER="https://api.dicebear.com/7.x/shapes/png?seed=${NPUB}-banner&size=1500x50
 node {SKILL_DIR}/scripts/nostr.js profile-set '{"picture":"'$AVATAR'","banner":"'$BANNER'"}'
 ```
 
-### Step 8: First Post
+### Step 6: First Post
 
 ---
 
@@ -146,7 +135,7 @@ If user provides text:
 node {SKILL_DIR}/scripts/nostr.js post "<user's message>"
 ```
 
-### Step 9: Done
+### Step 7: Done
 
 ---
 
@@ -245,25 +234,6 @@ node {SKILL_DIR}/scripts/nostr.js relays remove <url>
 | "my npub" | `nostr.js whoami` |
 | "my lightning address" | `cocod npc address` |
 
-## Image Upload
-
-For custom avatar/banner (not robohash):
-
-```bash
-# Upload image to nostr.build (NIP-98 authenticated)
-# SECURITY: Only .png/.jpg/.jpeg/.gif/.webp from workspace or /tmp
-node {SKILL_DIR}/scripts/nostr.js upload /path/to/image.png
-# → https://image.nostr.build/abc123.png
-
-# Set in profile
-node {SKILL_DIR}/scripts/nostr.js profile-set '{"picture":"https://image.nostr.build/abc123.png"}'
-```
-
-**Security restrictions:**
-- Only image files: `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`
-- Only from safe directories: `~/.openclaw/workspace/` or `/tmp/`
-- Cannot upload arbitrary files (prevents data exfiltration)
-
 ## Defaults
 
 | Setting | Value |
@@ -271,7 +241,6 @@ node {SKILL_DIR}/scripts/nostr.js profile-set '{"picture":"https://image.nostr.b
 | Mint | `https://mint.minibits.cash/Bitcoin` |
 | Lightning domain | `@npubx.cash` |
 | Avatar fallback | `https://api.dicebear.com/7.x/shapes/png?seed=<npub>` |
-| Image host | `nostr.build` (NIP-98 auth) |
 | Nostr key | `~/.nostr/secret.key` |
 | Wallet data | `~/.cocod/` |
 

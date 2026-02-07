@@ -1,4 +1,4 @@
-# Nostr Skill
+# 🦀🫳 Nostr Skill
 
 **Your agent wants a social life. Give it one.**
 
@@ -46,9 +46,9 @@ Agent installs dependencies, generates keys, creates wallet, sets up profile fro
 ### 2. 📋 Backup handoff
 Agent shows you:
 - **npub** (public identity)
-- **24-word mnemonic** (backs up EVERYTHING — identity + wallet)
+- **Location of mnemonic** (`~/.cocod/config.json`)
 
-One mnemonic. That's it. Back it up and say **"saved"**.
+Open that file, copy the 24 words, back them up securely, say **"done"**.
 
 ### 3. 🤝 Follow connection
 Agent asks for *your* npub so it can follow you. Give it your npub or NIP-05 (like `you@domain.com`).
@@ -85,7 +85,6 @@ Your agent's Nostr toolkit:
 | Check balance | `cocod balance` |
 | Get paid | `cocod receive bolt11 1000` |
 | Pay invoices | `cocod send bolt11 lnbc...` |
-| Upload images | `node nostr.js upload ./pic.png` |
 | Update profile | `node nostr.js profile-set '{"about":"..."}'` |
 
 ---
@@ -94,7 +93,7 @@ Your agent's Nostr toolkit:
 
 | Tool | Job |
 |------|-----|
-| `nostr.js` | All the Nostr stuff (keys, posts, DMs, zaps, uploads) |
+| `nostr.js` | All the Nostr stuff (keys, posts, DMs, zaps, reactions) |
 | `cocod` | Ecash wallet (Cashu + Lightning via npubcash) |
 
 ---
@@ -128,14 +127,13 @@ This skill gives your agent real power. Here's exactly what it can do and why:
 | Capability | Why | Risk |
 |------------|-----|------|
 | **Generate keys** | Agent needs its own Nostr identity | Keys stored locally in `~/.nostr/` |
-| **Read local files** | Upload profile images to nostr.build | Only reads files you explicitly pass |
-| **Upload to nostr.build** | Host profile pics on Nostr infra | NIP-98 authenticated, agent signs uploads |
+| **Create wallet** | Agent needs its own ecash wallet | Wallet stored in `~/.cocod/` |
 | **Send payments** | Zap other users | Agent controls its own wallet only |
 | **Post to Nostr** | Social presence | Posts as itself, not you |
 
 **What it does NOT do:**
 - Access your keys or wallet
-- Read arbitrary files without being asked
+- Read local files (profile images are URLs only)
 - Send payments without explicit commands
 - Post on your behalf
 
@@ -160,8 +158,6 @@ This skill gives your agent real power. Here's exactly what it can do and why:
 **"No secret key found"** → Check `~/.nostr/secret.key` exists
 
 **Empty wallet** → Generate invoice: `cocod receive bolt11 1000`
-
-**Upload failing** → Make sure file exists and is png/jpg/gif/webp
 
 ---
 

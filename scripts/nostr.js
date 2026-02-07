@@ -880,80 +880,6 @@ async function awardBadge(badgeId, recipientPubkey) {
   console.log(`✅ Badge awarded to ${nip19.npubEncode(targetPk)}`);
 }
 
-// UPLOAD: upload image to nostr.build with NIP-98 auth
-// SECURITY: Restricted to image files in safe directories only
-async function upload(filePath) {
-  const absolutePath = path.resolve(filePath);
-  
-  // Security: Only allow image extensions
-  const ext = path.extname(absolutePath).toLowerCase();
-  const allowedExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-  if (!allowedExts.includes(ext)) {
-    throw new Error(`Security: Only image files allowed (${allowedExts.join(', ')}). Got: ${ext}`);
-  }
-  
-  // Security: Only allow files from safe directories
-  const safeRoots = [
-    path.join(process.env.HOME, '.openclaw', 'workspace'),
-    '/tmp'
-  ];
-  const inSafeDir = safeRoots.some(root => absolutePath.startsWith(root + '/'));
-  if (!inSafeDir) {
-    throw new Error(`Security: Upload only allowed from workspace or /tmp. Path: ${absolutePath}`);
-  }
-  
-  if (!fs.existsSync(absolutePath)) {
-    throw new Error(`File not found: ${absolutePath}`);
-  }
-  
-  const fileData = fs.readFileSync(absolutePath);
-  const fileHash = crypto.createHash('sha256').update(fileData).digest('hex');
-  
-  const url = 'https://nostr.build/api/v2/upload/files';
-  
-  // Create NIP-98 auth event (kind 27235)
-  const authEvent = finalizeEvent({
-    kind: 27235,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['u', url],
-      ['method', 'POST'],
-      ['payload', fileHash]
-    ],
-    content: ''
-  }, sk);
-  
-  // Base64 encode the event for Authorization header
-  const authToken = Buffer.from(JSON.stringify(authEvent)).toString('base64');
-  
-  // Upload with NIP-98 auth
-  const formData = new FormData();
-  formData.append('file', new Blob([fileData]), path.basename(absolutePath));
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Nostr ' + authToken
-    },
-    body: formData
-  });
-  
-  const result = await response.json();
-  
-  if (result.status === 'error') {
-    throw new Error(`Upload failed: ${result.message}`);
-  }
-  
-  // Extract URL from response
-  const imageUrl = result.data?.[0]?.url;
-  if (!imageUrl) {
-    throw new Error('No URL in response');
-  }
-  
-  console.log(`✅ Uploaded: ${imageUrl}`);
-  return imageUrl;
-}
-
 // WHOAMI
 function whoami() {
   console.log(`Pubkey: ${pk}`);
@@ -1007,7 +933,6 @@ try {
     case 'unbookmark': await unbookmark(args[0]); break;
     case 'bookmarks': await listBookmarks(); break;
     case 'whoami': whoami(); break;
-    case 'upload': await upload(args[0]); break;
     case 'relays':
       if (args[0] === 'add') await addRelay(args[1], args[2]);
       else if (args[0] === 'remove') await removeRelay(args[1]);
@@ -1036,7 +961,6 @@ IDENTITY
   whoami                      Show your pubkey/npub
   profile [name] [about]      Get or set profile
   profile-set <json>          Set profile fields (JSON)
-  upload <file>               Upload image, get URL (for profile pics)
 
 SOCIAL
   post <content>              Post a note (kind 1)
