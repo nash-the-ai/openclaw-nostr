@@ -366,10 +366,19 @@ async function dm(pubkeyRef, message) {
 
 // READ DMS: NIP-04 encrypted DMs
 async function readDms(limit = 10) {
-  const events = await pool.querySync(RELAYS, [
-    { kinds: [4], authors: [pk], limit },
-    { kinds: [4], '#p': [pk], limit }
+  // Query sent and received DMs separately (pool.querySync takes single filter)
+  const [sentEvents, receivedEvents] = await Promise.all([
+    pool.querySync(RELAYS, { kinds: [4], authors: [pk], limit }),
+    pool.querySync(RELAYS, { kinds: [4], '#p': [pk], limit })
   ]);
+  
+  // Combine and dedupe
+  const seen = new Set();
+  const events = [...sentEvents, ...receivedEvents].filter(e => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
   
   events.sort((a, b) => b.created_at - a.created_at);
   console.log(`📨 DMs (${events.length}):\n`);
