@@ -6,6 +6,8 @@ This skill isn't for you — it's for your *agent*. It gets its own Nostr keypai
 
 You just back up the credentials and watch it go. 🚀
 
+**[Get OpenClaw →](https://openclaw.ai)**
+
 ---
 
 ## Install
