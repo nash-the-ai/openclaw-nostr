@@ -189,7 +189,6 @@ async function init(existingKey) {
   console.log('\n✅ Nostr identity configured!\n');
   console.log(`  Public Key: ${pk}`);
   console.log(`  npub: ${nip19.npubEncode(pk)}`);
-  console.log(`  nsec: ${nip19.nsecEncode(sk)}`);
   console.log(`\n  Key saved to: ${SECRET_KEY_FILE}`);
   
   if (fromCocod) {

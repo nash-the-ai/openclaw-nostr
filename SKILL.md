@@ -16,7 +16,7 @@ This skill grants these capabilities to the agent:
 - **Wallet creation** — Cashu wallet in `~/.cocod/` (mnemonic in config.json — user backs up)
 - **Nostr posting** — Posts, DMs, zaps as the agent's identity
 
-Agent runs wallet/identity setup silently. User is directed to back up `~/.cocod/config.json` (contains mnemonic). Agent does not read or display the mnemonic. Profile images use URLs only (no local file access).
+Agent runs wallet/identity setup with explicit user consent. User is directed to back up `~/.cocod/config.json` (contains mnemonic). Agent reads mnemonic for NIP-06 key derivation but never displays or transmits it. Profile images use URLs only (no local file access).
 
 ## On Install
 
