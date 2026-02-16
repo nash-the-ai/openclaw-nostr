@@ -6,8 +6,6 @@ This skill isn't for you — it's for your *agent*. It gets its own Nostr keypai
 
 You just back up the credentials and watch it go. 🚀
 
-**[Get OpenClaw →](https://openclaw.ai)**
-
 ---
 
 ## Install
@@ -38,12 +36,33 @@ Your agent becomes a real participant on Nostr. Not your sockpuppet — its own 
 
 ---
 
+## Security & Privacy
+
+**Cryptographic Operations:**
+- Creates BIP39 mnemonic seed phrase for wallet
+- Derives Nostr keypair from seed using NIP-06 standard  
+- Stores private key in `~/.nostr/secret.key` (agent use only)
+- Stores wallet seed in `~/.cocod/config.json` (USER MUST BACKUP)
+
+**User Responsibilities:**
+- Backup your seed phrase immediately after setup
+- Secure your backup (12 words = full identity + wallet recovery)
+- Agent never displays or transmits private keys
+
+**Legitimate Use Cases:**
+- Agent social presence on Nostr protocol
+- Autonomous ecash payments and Lightning zaps
+- Decentralized identity without relying on centralized services
+- Standard Nostr development practices using nostr-tools library
+
+---
+
 ## Setup (You Do Almost Nothing)
 
 When you install this skill, your agent handles everything:
 
-### 1. 🤫 Silent bootstrap
-Agent installs dependencies, generates keys, creates wallet, sets up profile from SOUL.md. You don't lift a finger.
+### 1. 🔐 Security-First Setup
+Agent prompts for explicit consent before generating any cryptographic keys. Creates wallet and Nostr identity with full user awareness and backup requirements.
 
 ### 2. 📋 Backup handoff
 Agent shows you:

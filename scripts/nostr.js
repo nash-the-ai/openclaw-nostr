@@ -366,19 +366,10 @@ async function dm(pubkeyRef, message) {
 
 // READ DMS: NIP-04 encrypted DMs
 async function readDms(limit = 10) {
-  // Query sent and received DMs separately (pool.querySync takes single filter)
-  const [sentEvents, receivedEvents] = await Promise.all([
-    pool.querySync(RELAYS, { kinds: [4], authors: [pk], limit }),
-    pool.querySync(RELAYS, { kinds: [4], '#p': [pk], limit })
+  const events = await pool.querySync(RELAYS, [
+    { kinds: [4], authors: [pk], limit },
+    { kinds: [4], '#p': [pk], limit }
   ]);
-  
-  // Combine and dedupe
-  const seen = new Set();
-  const events = [...sentEvents, ...receivedEvents].filter(e => {
-    if (seen.has(e.id)) return false;
-    seen.add(e.id);
-    return true;
-  });
   
   events.sort((a, b) => b.created_at - a.created_at);
   console.log(`📨 DMs (${events.length}):\n`);
@@ -974,6 +965,231 @@ function whoami() {
   console.log(`npub: ${nip19.npubEncode(pk)}`);
 }
 
+// ============ AUTORESPONSE STATE MANAGEMENT ============
+
+const DEFAULT_STATE_FILE = path.join(process.env.HOME, '.openclaw/workspace/memory/nostr-autoresponse-state.json');
+
+// Agent's own pubkey for WoT lookup (automatically detected from identity)
+
+function loadAutoResponseState(stateFile = DEFAULT_STATE_FILE) {
+  try {
+    return JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+  } catch {
+    return {
+      version: 1,
+      lastCheck: null,
+      responseCount: { hour: 0, hourStart: null },
+      responded: {},
+      ignored: {}
+    };
+  }
+}
+
+function saveAutoResponseState(state, stateFile = DEFAULT_STATE_FILE) {
+  state.lastCheck = Math.floor(Date.now() / 1000);
+  const dir = path.dirname(stateFile);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+}
+
+// Get WoT (owner's follow list from agent profile)
+async function getWoT() {
+  // Get agent's profile to extract owner's npub
+  const profile = await pool.get(RELAYS, { kinds: [0], authors: [pk] });
+  let ownerPubkey = pk; // fallback to agent if no owner found
+  
+  if (profile?.content) {
+    try {
+      const profileData = JSON.parse(profile.content);
+      // Look for owner's npub in profile (stored during setup)
+      if (profileData.about && profileData.about.includes('nostr:npub1')) {
+        const npubMatch = profileData.about.match(/nostr:(npub1[a-zA-Z0-9]+)/);
+        if (npubMatch) {
+          const { type, data } = nip19.decode(npubMatch[1]);
+          if (type === 'npub') {
+            ownerPubkey = data;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing profile for owner pubkey:', e);
+    }
+  }
+  
+  // Get owner's contact list (their follows = our WoT)
+  const contactList = await pool.get(RELAYS, { kinds: [3], authors: [ownerPubkey] });
+  const follows = new Set(contactList?.tags?.filter(t => t[0] === 'p').map(t => t[1]) || []);
+  
+  // Always include owner and agent in WoT
+  follows.add(ownerPubkey);
+  follows.add(pk);
+  
+  return follows;
+}
+
+// Check if content looks like a question or needs response
+function needsResponse(content) {
+  // Skip very short messages (gm, gn, lol, etc.)
+  if (content.trim().length < 5) return false;
+  
+  // Skip if just emojis
+  if (/^[\p{Emoji}\s]+$/u.test(content.trim())) return false;
+  
+  // Question patterns
+  const questionPatterns = [
+    /\?/,
+    /^(what|how|why|when|where|who|can|could|would|should|is|are|do|does|did|will|have|has)/i,
+    /tell me|explain|describe|help|thoughts on/i
+  ];
+  
+  if (questionPatterns.some(p => p.test(content))) return true;
+  
+  // Direct address patterns
+  if (/@nash|nash,|hey nash/i.test(content)) return true;
+  
+  // Default: if it's substantial (>20 chars), consider it for response
+  return content.trim().length > 20;
+}
+
+// PENDING-MENTIONS: Get unprocessed mentions from WoT
+async function pendingMentions(stateFile = DEFAULT_STATE_FILE, limit = 15) {
+  const state = loadAutoResponseState(stateFile);
+  const wot = await getWoT();
+  
+  // Fetch mentions
+  const events = await pool.querySync(RELAYS, { kinds: [1], '#p': [pk], limit: limit * 2 });
+  events.sort((a, b) => b.created_at - a.created_at);
+  
+  // Filter to pending (not responded, not ignored, in WoT)
+  const pending = [];
+  const skipped = { notWoT: 0, alreadyHandled: 0 };
+  
+  for (const e of events.slice(0, limit * 2)) {
+    const noteId = nip19.noteEncode(e.id);
+    
+    // Skip if already handled
+    if (state.responded[noteId] || state.ignored[noteId]) {
+      skipped.alreadyHandled++;
+      continue;
+    }
+    
+    // Skip if not in WoT
+    if (!wot.has(e.pubkey)) {
+      skipped.notWoT++;
+      continue;
+    }
+    
+    // Check if it needs a response
+    const needs = needsResponse(e.content);
+    
+    pending.push({
+      id: e.id,
+      noteId,
+      pubkey: e.pubkey,
+      npub: nip19.npubEncode(e.pubkey),
+      content: e.content,
+      created_at: e.created_at,
+      needsResponse: needs,
+      isQuestion: /\?/.test(e.content)
+    });
+    
+    if (pending.length >= limit) break;
+  }
+  
+  // Output as JSON for easy parsing
+  const output = {
+    pending: pending.length,
+    skipped,
+    wotSize: wot.size,
+    lastCheck: state.lastCheck,
+    mentions: pending
+  };
+  
+  console.log(JSON.stringify(output, null, 2));
+}
+
+// MARK-RESPONDED: Mark a mention as responded
+async function markResponded(noteRef, responseNoteId = null, stateFile = DEFAULT_STATE_FILE) {
+  const noteId = noteRef.startsWith('note1') ? noteRef : nip19.noteEncode(resolveEventId(noteRef));
+  const state = loadAutoResponseState(stateFile);
+  
+  state.responded[noteId] = {
+    at: Math.floor(Date.now() / 1000),
+    responseId: responseNoteId
+  };
+  
+  // Update hourly rate limit counter
+  const now = Math.floor(Date.now() / 1000);
+  const hourAgo = now - 3600;
+  if (!state.responseCount.hourStart || state.responseCount.hourStart < hourAgo) {
+    state.responseCount = { hour: 1, hourStart: now };
+  } else {
+    state.responseCount.hour++;
+  }
+  
+  saveAutoResponseState(state, stateFile);
+  console.log(`✅ Marked responded: ${noteId}`);
+  if (responseNoteId) console.log(`   Response: ${responseNoteId}`);
+}
+
+// MARK-IGNORED: Mark a mention as ignored (no response needed)
+async function markIgnored(noteRef, reason = 'no_response_needed', stateFile = DEFAULT_STATE_FILE) {
+  const noteId = noteRef.startsWith('note1') ? noteRef : nip19.noteEncode(resolveEventId(noteRef));
+  const state = loadAutoResponseState(stateFile);
+  
+  state.ignored[noteId] = {
+    at: Math.floor(Date.now() / 1000),
+    reason
+  };
+  
+  saveAutoResponseState(state, stateFile);
+  console.log(`✅ Marked ignored: ${noteId} (${reason})`);
+}
+
+// RATE-LIMIT-CHECK: Check if we can respond (max 10/hour)
+function checkRateLimit(stateFile = DEFAULT_STATE_FILE) {
+  const state = loadAutoResponseState(stateFile);
+  const now = Math.floor(Date.now() / 1000);
+  const hourAgo = now - 3600;
+  
+  if (!state.responseCount.hourStart || state.responseCount.hourStart < hourAgo) {
+    console.log(JSON.stringify({ allowed: true, remaining: 10 }));
+    return true;
+  }
+  
+  const remaining = 10 - state.responseCount.hour;
+  console.log(JSON.stringify({ allowed: remaining > 0, remaining: Math.max(0, remaining) }));
+  return remaining > 0;
+}
+
+// AUTORESPONSE-STATUS: Show current state summary
+async function autoResponseStatus(stateFile = DEFAULT_STATE_FILE) {
+  const state = loadAutoResponseState(stateFile);
+  const wot = await getWoT();
+  
+  const now = Math.floor(Date.now() / 1000);
+  const hourAgo = now - 3600;
+  
+  let hourlyCount = 0;
+  if (state.responseCount.hourStart && state.responseCount.hourStart >= hourAgo) {
+    hourlyCount = state.responseCount.hour;
+  }
+  
+  const summary = {
+    lastCheck: state.lastCheck ? new Date(state.lastCheck * 1000).toISOString() : null,
+    wotSize: wot.size,
+    responded: Object.keys(state.responded).length,
+    ignored: Object.keys(state.ignored).length,
+    hourlyResponses: hourlyCount,
+    hourlyLimit: 10,
+    canRespond: hourlyCount < 10
+  };
+  
+  console.log(JSON.stringify(summary, null, 2));
+}
+
 // ============ MAIN ============
 
 const [,, cmd, ...args] = process.argv;
@@ -1023,6 +1239,11 @@ try {
     case 'unbookmark': await unbookmark(args[0]); break;
     case 'bookmarks': await listBookmarks(); break;
     case 'whoami': whoami(); break;
+    case 'pending-mentions': await pendingMentions(args[0] || DEFAULT_STATE_FILE, parseInt(args[1]) || 15); break;
+    case 'mark-responded': await markResponded(args[0], args[1], args[2] || DEFAULT_STATE_FILE); break;
+    case 'mark-ignored': await markIgnored(args[0], args[1] || 'no_response_needed', args[2] || DEFAULT_STATE_FILE); break;
+    case 'rate-limit': checkRateLimit(args[0] || DEFAULT_STATE_FILE); break;
+    case 'autoresponse-status': await autoResponseStatus(args[0] || DEFAULT_STATE_FILE); break;
     case 'relays':
       if (args[0] === 'add') await addRelay(args[1], args[2]);
       else if (args[0] === 'remove') await removeRelay(args[1]);
@@ -1095,6 +1316,13 @@ BADGES (NIP-58)
 
 ZAPS (NIP-57)
   zap <npub> <sats> [comment] Create zap invoice
+
+AUTORESPONSE (Heartbeat Integration)
+  pending-mentions [file] [limit]   Get unprocessed WoT mentions (JSON)
+  mark-responded <note> [resp]      Mark mention as responded
+  mark-ignored <note> [reason]      Mark mention as ignored
+  rate-limit [file]                 Check hourly rate limit (10/hr)
+  autoresponse-status [file]        Show autoresponse state summary
 
 WALLET (use cocod)
   cocod init                  Initialize Cashu wallet
